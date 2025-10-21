@@ -1,15 +1,25 @@
 # Ignore Python virtual environment
 .venv/
 
-# Ignore Python cache files
+# Ignore Python cache files and compiled files
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
 # Ignore IDE-specific files
 .vscode/
 .idea/
+*.code-workspace
 
-# Ignore generated files
+# Ignore generated output files and directories
+# This covers snapshots, logs, and other generated content.
+output/logs
+output/snapshots
+
+# Ignore old pattern-based generated files (optional but good for cleanup)
 violation_*.json
 violation_*.jpg
+
+# Ignore large model files 
 *.pt
