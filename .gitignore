@@ -1,5 +1,6 @@
 # Ignore Python virtual environment
 .venv/
+venv/
 
 # Ignore Python cache files and compiled files
 __pycache__/
@@ -14,8 +15,8 @@ __pycache__/
 
 # Ignore generated output files and directories
 # This covers snapshots, logs, and other generated content.
-output/logs
-output/snapshots
+/output/logs/
+/output/snapshots/
 
 # Ignore old pattern-based generated files (optional but good for cleanup)
 violation_*.json
