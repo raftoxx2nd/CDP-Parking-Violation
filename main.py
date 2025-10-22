@@ -19,7 +19,9 @@ MODEL_PATH = 'yolo11n.pt'
 # Set a fixed video source path or URL here. 
 # If None, the script will prompt the user for input.
 # Example: "rtsp://my-stream-url" or "path/to/video.mp4"
-FIXED_VIDEO_SOURCE = "https://192.168.1.15:8080/video"
+FIXED_VIDEO_SOURCE = "https://10.26.49.165:8080/video"
+# Width of the displayed video frame. The height will be scaled automatically.
+DISPLAY_WIDTH = 1280
 # Confidence and IoU thresholds for object detection
 CONF_THRESHOLD = 0.3
 IOU_THRESHOLD = 0.5
@@ -149,8 +151,8 @@ def run_violation_detection():
                 # Default color is green for non-violating vehicles
                 color = (0, 255, 0) 
                 
-                # Check for violation condition (vehicle in a zone)
-                if is_in_zone and label in ['motorcycle', 'motorbike', "car", "truck", "bus"]:
+                # Check for violation condition (vehicle in a zone) #, "car", "truck", "bus"
+                if is_in_zone and label in ['motorcycle', 'motorbike']:
                     idle_timers[track_id] += 1 # Increment idle timer
                     
                     # If timer exceeds threshold, it's a violation
@@ -216,7 +218,10 @@ def run_violation_detection():
             cv2.polylines(frame, [poly], isClosed=True, color=(255, 255, 0), thickness=2)
 
         # 7. Display Live View
-        cv2.imshow('Real-time Parking Violation Detection', frame)
+        # Resize frame for display
+        scale = DISPLAY_WIDTH / frame.shape[1]
+        display_frame = cv2.resize(frame, (DISPLAY_WIDTH, int(frame.shape[0] * scale)))
+        cv2.imshow('Real-time Parking Violation Detection', display_frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
