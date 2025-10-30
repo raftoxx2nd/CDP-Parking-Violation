@@ -12,14 +12,14 @@ __pycache__/
 .idea/
 *.code-workspace
 
-# Ignore generated output files and directories
-# This covers snapshots, logs, and other generated content.
+# Ignore generated output files and directories and configs
 output/logs
 output/snapshots
-
-# Ignore old pattern-based generated files (optional but good for cleanup)
-violation_*.json
-violation_*.jpg
+config/zones.json
 
 # Ignore large model files 
 *.pt
+
+# ignore input video files
+input/
+
