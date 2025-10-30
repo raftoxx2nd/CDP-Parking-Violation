@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import matplotlib
+#matplotlib.use('Qt5Agg') #Use if have isssue with default backend
 import matplotlib.pyplot as plt
 import json
 import os
@@ -12,52 +14,80 @@ from capture.stream_handler import get_video_capture, get_frame_from_source
 
 # --- Configuration ---
 ZONES_OUTPUT_FILE = 'config/zones.json'
-FIXED_VIDEO_SOURCE = "https://192.168.1.15:8080/video"
+FIXED_VIDEO_SOURCE = "https://10.26.49.165:8080/video"
 
-def define_polygons_matplotlib(frame_bgr):
+def define_polygons_interactive(frame_bgr):
     """
-    Define multiple polygons interactively on a given frame using matplotlib.
+    Define multiple polygons interactively on a given frame using matplotlib's event handling.
     Returns a dictionary of zones.
     """
     frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-    zones = {}
     
     fig, ax = plt.subplots(figsize=(15, 10))
     ax.imshow(frame_rgb)
-    ax.set_title('Click to define polygon vertices. Press Enter to finish a polygon. Close window when done.')
+    ax.set_title('Click to define vertices. Press "Enter" to finish a polygon. Close window when done.')
     plt.axis('off')
 
-    slot_idx = 1
     print("\n--- ROI Definition Instructions ---")
     print("1. Click on the image to add points for a polygon.")
     print("2. Press 'Enter' to complete the current polygon and start a new one.")
     print("3. Close the plot window to finish and save all defined zones.")
     print("------------------------------------")
 
-    while plt.get_fignums():
-        # ginput waits for user clicks. n=-1 means infinite points until Enter.
-        pts = plt.ginput(n=-1, timeout=0, show_clicks=True)
-        if not pts: # If the user closes the window, ginput returns an empty list
-            break
-        
-        poly = np.array([[int(x), int(y)] for (x, y) in pts], dtype=np.int32)
-        
-        if poly.shape[0] < 3:
-            print("! Warning: A polygon must have at least 3 points. This one was ignored.")
-            continue
-            
-        key = f'zone_{slot_idx}'
-        zones[key] = poly
-        slot_idx += 1
-        
-        # Draw the completed polygon on the plot for immediate user feedback
-        ax.plot(np.append(poly[:, 0], poly[0, 0]), np.append(poly[:, 1], poly[0, 1]), '-r', lw=2)
-        ax.text(poly[0, 0], poly[0, 1] - 10, key, color='white', backgroundcolor='red', fontsize=9)
-        fig.canvas.draw()
-        print(f"  > Polygon '{key}' saved with {len(poly)} points. You can draw another or close the window.")
+    builder = PolygonBuilder(ax)
+    plt.show()  # This is a blocking call
 
-    plt.close(fig)
-    return zones
+    return builder.zones
+
+class PolygonBuilder:
+    def __init__(self, ax):
+        self.ax = ax
+        self.fig = ax.figure
+        self.zones = {}
+        self.current_poly_pts = []
+        self.zone_idx = 1
+        
+        self.line = self.ax.plot([], [], 'r-o', lw=2)[0]
+        
+        self.cid_click = self.fig.canvas.mpl_connect('button_press_event', self.on_click)
+        self.cid_key = self.fig.canvas.mpl_connect('key_press_event', self.on_key)
+
+    def on_click(self, event):
+        if event.inaxes != self.ax:
+            return
+        
+        # Add point
+        self.current_poly_pts.append((event.xdata, event.ydata))
+        
+        # Update visualization
+        x, y = zip(*self.current_poly_pts)
+        self.line.set_data(x, y)
+        self.fig.canvas.draw()
+
+    def on_key(self, event):
+        if event.key == 'enter':
+            if len(self.current_poly_pts) < 3:
+                print("! Warning: A polygon must have at least 3 points. This one was ignored.")
+                self.reset_current_poly()
+                return
+
+            key = f'zone_{self.zone_idx}'
+            poly = np.array(self.current_poly_pts, dtype=np.int32)
+            self.zones[key] = poly
+            self.zone_idx += 1
+            
+            # Draw the completed polygon for feedback
+            self.ax.plot(np.append(poly[:, 0], poly[0, 0]), np.append(poly[:, 1], poly[0, 1]), '-r', lw=2)
+            self.ax.text(poly[0, 0], poly[0, 1] - 10, key, color='white', backgroundcolor='red', fontsize=9)
+            
+            print(f"  > Polygon '{key}' saved with {len(poly)} points. You can draw another or close the window.")
+            
+            self.reset_current_poly()
+
+    def reset_current_poly(self):
+        self.current_poly_pts = []
+        self.line.set_data([], [])
+        self.fig.canvas.draw()
 
 def main():
     """Main function to run the ROI definition process."""
@@ -80,7 +110,7 @@ def main():
         print(f"✅ Frame captured ({orig_w}x{orig_h}). Please define zones in the window that opens.")
 
         # 2. Let the user define zones on the captured frame
-        zones = define_polygons_matplotlib(frame)
+        zones = define_polygons_interactive(frame)
 
         if not zones:
             print("\nNo zones were defined. Exiting without saving.")

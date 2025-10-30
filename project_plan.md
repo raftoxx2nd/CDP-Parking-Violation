@@ -4,12 +4,12 @@
 
 ### 3.1 System Overview & Architecture (Brief)
 
-The system is designed to monitor parking zones on a university campus (Universitas Brawijaya) and detect unauthorized parking (e.g., motorbikes parked in car‐zones) in real-time, using computer-vision and server-based processing.
+The system is designed to monitor parking zones on a university campus (Universitas Brawijaya) and detect unauthorized parking (e.g., motorbikes parked in car‐zones) in real-time, using computer-vision and local PC processing.
 Primary components:
 
 * **Input Layer**: IP/ESP32-CAM cameras streaming video.
-* **Processing Layer**: PC running a pretrained YOLOv8 model for object detection; logic module checks zone membership and stationary time for violations.
-* **Output Layer**: Web dashboard that displays alerts, logs violations and provides admin controls.
+* **Processing Layer**: PC running a pretrained YOLOv11 model for object detection; logic module checks zone membership and stationary time for violations.
+* **Output Layer**: Web dashboard that displays alerts, logs violations, snapshots and provides admin controls.
 * **Control & Data Layer**: Zone definition module, configuration database, user interface for defining polygons and parking zone metadata.
 
 Architecture follows a layered design:
